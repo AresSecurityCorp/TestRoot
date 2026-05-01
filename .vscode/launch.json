@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "https://cb2-release2.aresseccorp.com/login",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Debug Playwright Test (Current File)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/node_modules/@playwright/test/cli.js",
+      "args": [
+        "test",
+        "${relativeFile}",
+        "--project=chromium"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}",
+      // No PWDEBUG so only VS Code debugger is used
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ]
+}
