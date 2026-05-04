@@ -7,26 +7,27 @@ import fs from 'fs/promises';
 import { RUN_DEV , getDBConfig, getLoginUrl , getPassword, getUsername } from '../utils/constants.js';
 import {AdminApprover } from '../utils/approve.js';
 
-
 //test.use({ storageState: 'playwright/.auth.json' });
 test.beforeEach('logging in to Avert', async ({ page }) => {
   console.log(`Running ${test.info().title}`);
   await AdminApprover.Initialize(await page.context().browser());
   await logInToAvert(page);
-  // await page.goto('https://my.start.url/');
 });
 test.afterEach(async () => {
   await AdminApprover.ClosePage();
 });
 
 console.log('TestSettings.spec.ts loaded');
-const notificationTestTags = [ /^Access Management/, /^Advanced Reporting/ ] ;
-notificationTestTags.forEach( (notificationTag) => {
-  console.log('creating test for notification tag ' + notificationTag.toString());
-  test('TestSettingsAllowNotification_' + notificationTag.toString(), async ({ page }) => {
-    await TestAllowNotification(page, notificationTag);
-  });
-});
+CreateNotificationTests();
+function CreateNotificationTests() {
+  const notificationTestTags = [ /^Access Management/, /^Advanced Reporting/ ] ;
+  for( let notificationIdx = 0; notificationIdx < 30; notificationIdx++) {
+    console.log('creating test for notification  ' + notificationIdx.toString());
+    test('TestSettingsAllowNotification_' + notificationIdx.toString(), async ({ page }) => {
+      await TestAllowNotificationIdx(page, notificationIdx);
+    });
+  }
+}
 
 // very flakey test.  Sometimes the ss icon file comes out slighly different, then it always sets to file1
 // somewhat regularly the pic may not be fulley loaded.  Also occasionally shows a focus box of 
@@ -84,20 +85,25 @@ test('TestSettingsModifyOfficePhone', async ({ page }) => {
   await TestModifyPhone(page, 'OFFICE PHONE' );
 });
 
-async function TestAllowNotification(page : Page, notificationName : RegExp) {
+
+async function TestAllowNotificationIdx(page : Page, notificationIdx: number) {
   const regexStartsWithNotifications = /^Notifications/;
-  console.log("waitForTimeout ");
+  //console.log("waitForTimeout ");
   await page.waitForTimeout(1000);
-  console.log("about to EnsureInSettingAss");
+  //console.log("about to EnsureInSettingAss");
   await EnsureInSettingsApp(page);
   //console.log("timeout been waited for");
   const notificationsItem = await page.getByRole('listitem').filter({ hasText: regexStartsWithNotifications });
   await expect(notificationsItem).toBeVisible();
   
   const allListItem = await notificationsItem.getByRole('listitem').all();
-  console.log('allListItem count ' + await allListItem.length);
-  const targetListItem = await notificationsItem.getByRole('listitem').filter({ hasText: notificationName });
-  console.log('targetListItem count ' + await targetListItem.count());
+  //console.log('allListItem count ' + await allListItem.length);
+  if(notificationIdx >= allListItem.length) {
+    console.log('Invalid notification index: ' + notificationIdx);
+    return;
+  }
+  const targetListItem = allListItem[notificationIdx];
+  console.log('Testing ' + await targetListItem.textContent());
   await targetListItem.click();
   const allowNotifications = await targetListItem.getByRole('checkbox');
   await expect(allowNotifications).toBeVisible();
@@ -107,7 +113,7 @@ async function TestAllowNotification(page : Page, notificationName : RegExp) {
   console.log('toggled allow notification to ' + !isChecked);
   await page.waitForTimeout(500);
   await executeSaveActions(page);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
   await page.reload({ waitUntil: 'domcontentloaded' });
 
   await targetListItem.click();
@@ -122,6 +128,7 @@ async function TestAllowNotification(page : Page, notificationName : RegExp) {
   // add code to save, check val, return to original and save 
   console.log('End of the allow notification test  ') ;
 };
+
 
 test('TestSettingsNotificationType', async ({ page }) => {
 

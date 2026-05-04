@@ -24,9 +24,9 @@ export class AdminApprover {
     }
   }
   public static async ClosePage(): Promise<void> {
-    console.log('AdminApprover.ClosePage called');
+    //console.log('AdminApprover.ClosePage called');
     if(this.myContext != null){
-        console.log('AdminApprover.ClosePage closing context');
+        //console.log('AdminApprover.ClosePage closing context');
         await this.myContext.close();
         this.myPage = null;
     }

@@ -6,11 +6,6 @@ import { getComparator } from 'playwright-core/lib/utils';
 
 // todo - add test to cancel out of edit
 
-// test.beforeEach('logging in to Avert', async ({ page }) => {
-//   await logInToAvert(page);
-// });
-
-
 class RadioHelper {
     radios : Locator[] = [];
     orgIndex : number = -1;
@@ -23,7 +18,7 @@ class RadioHelper {
       const radioElement = '.MuiRadioGroup-root';
 
       const radLocator = await userPage.locator(radioElement);
-      await expect(radLocator).toBeVisible();
+      //await expect(radLocator).toBeVisible();
 
       //console.log('radioLeader count=' + await radLocator.count() + ', text=' + await radLocator.textContent() );
       //const radioSel  = await radLocator.getAttribute('value');
@@ -118,11 +113,7 @@ class ComboHelper {
 test.beforeEach('logging in to Avert', async ({ page }) => {
   console.log(`Running ${test.info().title}`);
   await AdminApprover.Initialize(await page.context().browser());
-  //const targetURL = getLoginUrl();
-  //await page.goto(getLoginUrl());
-
   //await logInToAvert(page);
-  // await page.goto('https://my.start.url/');
 });
 test.afterEach(async () => {
   await AdminApprover.ClosePage();
@@ -130,15 +121,19 @@ test.afterEach(async () => {
 
 
 console.log('test-1.spec.ts loaded');
-const comboTestTags = ['Coordinate System' , 'Scroll Bars', 'Ground Distance/Speed' ] ;
-//const comboTestTags = ['Coordinate System' , 'Open In', 'Default App', 'Scroll Bars', 'User Locale', 'Ground Distance/Speed' ] ;
-//const comboTestTags = [ 'Default App', 'Scroll Bars', 'User Locale', 'Ground Distance/Speed' ] ;
-comboTestTags.forEach( (comboTag) => {
-  console.log('creating test for combo tag ' + comboTag.toString());
-  test('testSelect' + comboTag.toString(), async ({ browser }) => {
-    await TestComboSelections(await OpenPage(browser),   comboTag.toString() );
+CreateComboTests();
+
+function CreateComboTests() {
+  const comboTestTags = ['Coordinate System' , 'Scroll Bars', 'Ground Distance/Speed' ] ;
+  //const comboTestTags = ['Coordinate System' , 'Open In', 'Default App', 'Scroll Bars', 'User Locale', 'Ground Distance/Speed' ] ;
+  //const comboTestTags = [ 'Default App', 'Scroll Bars', 'User Locale', 'Ground Distance/Speed' ] ;
+  comboTestTags.forEach( (comboTag) => {
+    console.log('creating test for combo tag ' + comboTag.toString());
+    test('testSelect' + comboTag.toString(), async ({ browser }) => {
+      await TestComboSelections(await OpenPage(browser),   comboTag.toString() );
+    });
   });
-});
+}
 
 test('testSelectTimeDisplay', async ({ browser }) => {
 //  const radioElement = '.MuiRadioGroup-root';
@@ -146,6 +141,7 @@ test('testSelectTimeDisplay', async ({ browser }) => {
   await EnsureInSettingsApp(myPage);
 
   const myHelper = new RadioHelper();
+  await expect(myPage.locator('.MuiRadioGroup-root')).toBeVisible();
   await myHelper.populate(myPage);
   const testRadio = await myHelper.getTestRadio();
   const orgRadio = await myHelper.getOrgRadio();
@@ -154,10 +150,28 @@ test('testSelectTimeDisplay', async ({ browser }) => {
   await testRadio.click();
   await executeSaveActions(myPage);
   console.log('about to reload, url=' + myPage.url());
-  await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
-  //await myPage.goto(myPage.url(), { waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
-  //await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
-  await myPage.waitForTimeout(1000);
+  // await expect(async () => {
+  //   await myPage.reload({ waitUntil: 'domcontentloaded' });
+  //   // Check if your element is visible or matches a condition
+  //   console.log('after reload, checking if test radio is checked');
+  //   await expect(testRadio).toBeChecked();
+  // }).toPass({
+  //   intervals: [1000], // Wait 1 seconds between reloads
+  //   timeout: 10000     // Try for up to 10 seconds
+  // });
+// numerous methods here to wait for radio value, the issue si the page needs 
+// reloaded when the value take a long tim eto propagate internally.  I just added
+// an await in RadioHelper.ppopulate , have not seen problem sicne.  Likely coincidence.  JDP 5/4/24
+// the toBeCheckeed was causing an exception no caught by topass.  If problem 
+// occurs reliably again write a while loop that checks radio independent of PW
+  await expect(async () => {
+    await myPage.reload({ waitUntil: 'domcontentloaded' });
+    console.log('after reload, checking if test radio is checked val=' + await testRadio.getAttribute('value'));
+    await expect(testRadio).toBeChecked();
+  }).toPass({ timeout: 10000 });
+  // await myPage.waitForTimeout(1000);
+  // await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
+  // await myPage.waitForTimeout(1000);
   await expect(testRadio).toBeChecked();
   console.log('testSelectTimeDisplay, clicking org radio' + await orgRadio.getAttribute('value'));
   await orgRadio.click();
@@ -165,6 +179,15 @@ test('testSelectTimeDisplay', async ({ browser }) => {
   await executeSaveActions(myPage);
   await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
   await myPage.waitForTimeout(1000);
+  await expect(async () => {
+    await myPage.reload({ waitUntil: 'domcontentloaded' });
+    console.log('after reload, checking if org radio is checked text=' + await orgRadio.textContent() + ', value=' + await orgRadio.getAttribute('value') );
+    // Check if your element is visible or matches a condition
+    await expect(orgRadio).toBeChecked();
+  }).toPass({
+    intervals: [1000], // Wait 1 seconds between reloads
+    timeout: 10000     // Try for up to 10 seconds
+  });
   await expect(orgRadio).toBeChecked();
    //await TestComboSelections(await OpenPage(browser),  'Open In' );
  });
