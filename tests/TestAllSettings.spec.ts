@@ -125,19 +125,14 @@ test.afterEach(async () => {
 });
 
 console.log('TestSettings.spec.ts loaded');
-//CreateNotificationTests();
-//CreateComboTests();
+CreateNotificationTests();
+CreateComboTests();
 
-// const notificationTestTags = [ /^Access Management/, /^Advanced Reporting/ ] ;
-// notificationTestTags.forEach( (notificationTag) => {
-//   console.log('creating test for notification tag ' + notificationTag.toString());
-//   test('TestSettingsAllowNotification_' + notificationTag.toString(), async ({ page }) => {
-//     await TestAllowNotification(page, notificationTag);
-//   });
-// });\
 function CreateNotificationTests() {
   const notificationTestTags = [ /^Access Management/, /^Advanced Reporting/ ] ;
-  for( let notificationIdx = 0; notificationIdx < 30; notificationIdx++) {
+  //const maxNotifications = 30; // set higher than max of 25 to allow future expansion
+  const maxNotifications = 2; // set small to speed things up
+  for( let notificationIdx = 0; notificationIdx < maxNotifications; notificationIdx++) {
     console.log('creating test for notification  ' + notificationIdx.toString());
     test('TestSettingsAllowNotification_' + notificationIdx.toString(), async ({ page }) => {
       await TestAllowNotificationIdx(page, notificationIdx);
@@ -151,11 +146,30 @@ function CreateComboTests() {
   //const comboTestTags = [ 'Default App', 'Scroll Bars', 'User Locale', 'Ground Distance/Speed' ] ;
   comboTestTags.forEach( (comboTag) => {
     console.log('creating test for combo tag ' + comboTag.toString());
-    test('testSelect' + comboTag.toString(), async ({ browser }) => {
-      await TestComboSelections(await OpenPage(browser),   comboTag.toString() );
+    // test('testSelect' + comboTag.toString(), async ({ browser }) => {
+    //   await TestComboSelections(await OpenPage(browser),   comboTag.toString() );
+    // });
+    test('testSettingsSelect' + comboTag.toString(), async ({ page }) => {
+      await TestComboSelections(page,   comboTag.toString() );
     });
   });
 }
+
+test('TestSettingsModifyCellPhone', async ({ page }) => {
+  await TestModifyPhone(page, 'CELL PHONE' );
+});
+
+test('TestSettingsModifyOfficePhone', async ({ page }) => {
+  await TestModifyPhone(page, 'OFFICE PHONE' );
+});
+
+test('testSettingsTimeDisplay', async ({ page }) => {
+  await TestTimeDisplay(page);
+});
+
+test('TestSettingsNotificationType', async ({ page }) => {
+  await TestNotificationType(page);
+});
 
 
 // very flakey test.  Sometimes the ss icon file comes out slighly different, then it always sets to file1
@@ -206,19 +220,11 @@ if(await imgUser.count()  >0 ) {
   console.log('end of test'); 
 });
 
-test('TestSettingsModifyCellPhone', async ({ page }) => {
-  await TestModifyPhone(page, 'CELL PHONE' );
-});
-
-test('TestSettingsModifyOfficePhone', async ({ page }) => {
-  await TestModifyPhone(page, 'OFFICE PHONE' );
-});
-
-test('testSelectTimeDisplay', async ({ page }) => {
-  return;
+async function TestTimeDisplay(myPage : Page) {
 //  const radioElement = '.MuiRadioGroup-root';
   //const myPage = await OpenPage(browser);
-  const myPage = page;
+  await myPage.waitForTimeout(1000);
+  //console.log("about to EnsureInSettingAss");
   await EnsureInSettingsApp(myPage);
 
   const myHelper = new RadioHelper();
@@ -231,49 +237,20 @@ test('testSelectTimeDisplay', async ({ page }) => {
   await testRadio.click();
   await executeSaveActions(myPage);
   console.log('about to reload');
-  await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
-  // await expect(async () => {
-  //   await myPage.reload({ waitUntil: 'domcontentloaded' });
-  //   // Check if your element is visible or matches a condition
-  //   console.log('after reload, checking if test radio is checked');
-  //   await expect(testRadio).toBeChecked();
-  // }).toPass({
-  //   intervals: [1000], // Wait 1 seconds between reloads
-  //   timeout: 10000     // Try for up to 10 seconds
-  // });
-// numerous methods here to wait for radio value, the issue si the page needs 
-// reloaded when the value take a long tim eto propagate internally.  I just added
-// an await in RadioHelper.ppopulate , have not seen problem sicne.  Likely coincidence.  JDP 5/4/24
-// the toBeCheckeed was causing an exception no caught by topass.  If problem 
-// occurs reliably again write a while loop that checks radio independent of PW
-  // await expect(async () => {
-  //   await myPage.reload({ waitUntil: 'domcontentloaded' });
-  //   console.log('after reload, checking if test radio is checked val=' + await testRadio.getAttribute('value'));
-  //   await expect(testRadio).toBeChecked();
-  // }).toPass({ timeout: 10000 });
-  // await myPage.waitForTimeout(1000);
-  // await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
-  // await myPage.waitForTimeout(1000);
+  await myPage.goto(myPage.url());
+
+  //await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
+
   await expect(testRadio).toBeChecked({ timeout: 10000 });
   console.log('testSelectTimeDisplay, clicking org radio' + await orgRadio.getAttribute('value'));
   await orgRadio.click();
   await myPage.waitForTimeout(1000);
   await executeSaveActions(myPage);
   //await myPage.reload({ waitUntil: 'domcontentloaded' }); // had issues with Save not appearing, hence this ugly
+  await myPage.goto(myPage.url());
   await myPage.waitForTimeout(1000);
-  // await expect(async () => {
-  //   await myPage.reload({ waitUntil: 'domcontentloaded' });
-  //   console.log('after reload, checking if org radio is checked text=' + await orgRadio.textContent() + ', value=' + await orgRadio.getAttribute('value') );
-  //   // Check if your element is visible or matches a condition
-  //   await expect(orgRadio).toBeChecked();
-  // }).toPass({
-  //   intervals: [1000], // Wait 1 seconds between reloads
-  //   timeout: 20000     // Try for up to 10 seconds
-  // });
   await expect(orgRadio).toBeChecked();
-   //await TestComboSelections(await OpenPage(browser),  'Open In' );
- });
-
+}
 
 async function TestAllowNotificationIdx(page : Page, notificationIdx: number) {
   const regexStartsWithNotifications = /^Notifications/;
@@ -283,16 +260,6 @@ async function TestAllowNotificationIdx(page : Page, notificationIdx: number) {
   await EnsureInSettingsApp(page);
   //console.log("timeout been waited for");
   const notificationsItem = await page.getByRole('listitem').filter({ hasText: regexStartsWithNotifications });
-  //   await page.waitForTimeout(1000);
-  // if(await notificationsItem.count() == 0) {
-  //   console.log('Notifications item not found, wait 2 sec');
-  //   //await page.reload({ waitUntil: 'domcontentloaded' });
-  //   await page.waitForTimeout(2000);
-  //   if(await notificationsItem.count() == 0) {
-  //     console.log('wait anaother 2 sec');
-  //     await page.waitForTimeout(2000);
-  //   }
-  // }
 
   await expect(notificationsItem).toBeVisible( { timeout: 10_000 });
   
@@ -329,48 +296,7 @@ async function TestAllowNotificationIdx(page : Page, notificationIdx: number) {
   console.log('End of the allow notification test  ') ;
 };
 
-
-async function TestAllowNotification(page : Page, notificationName : RegExp) {
-  const regexStartsWithNotifications = /^Notifications/;
-  console.log("waitForTimeout ");
-  await page.waitForTimeout(1000);
-  console.log("about to EnsureInSettingAss");
-  await EnsureInSettingsApp(page);
-  //console.log("timeout been waited for");
-  const notificationsItem = await page.getByRole('listitem').filter({ hasText: regexStartsWithNotifications });
-  await expect(notificationsItem).toBeVisible();
-  
-  const allListItem = await notificationsItem.getByRole('listitem').all();
-  console.log('allListItem count ' + await allListItem.length);
-  const targetListItem = await notificationsItem.getByRole('listitem').filter({ hasText: notificationName });
-  console.log('targetListItem count ' + await targetListItem.count());
-  await targetListItem.click();
-  const allowNotifications = await targetListItem.getByRole('checkbox');
-  await expect(allowNotifications).toBeVisible();
-  const isChecked = await allowNotifications.isChecked();
-  //await allowNotifications.isChecked() ? await allowNotifications.uncheck() : await allowNotifications.check();
-  await(isChecked ? allowNotifications.uncheck() :  allowNotifications.check());
-  console.log('toggled allow notification to ' + !isChecked);
-  await page.waitForTimeout(500);
-  await executeSaveActions(page);
-  await page.waitForTimeout(500);
-  await page.reload({ waitUntil: 'domcontentloaded' });
-
-  await targetListItem.click();
-  await expect(await allowNotifications.isChecked()).toBe(!isChecked) ;
-
-  //isChecked ? await allowNotifications.check() : await allowNotifications.uncheck();
-  await(isChecked ? allowNotifications.check() :  allowNotifications.uncheck());
-  console.log('toggled allow notification back to ' + isChecked);
-  await expect(await allowNotifications.isChecked()).toBe(isChecked) ;
-  await page.waitForTimeout(500);
-  await executeSaveActions(page); 
-  // add code to save, check val, return to original and save 
-  console.log('End of the allow notification test  ') ;
-};
-
-test('TestSettingsNotificationType', async ({ page }) => {
-
+async function TestNotificationType(page : Page) {
     const regexStartsWithNotifications = /^Notifications/;
   console.log("waitForTimeout ");
   await page.waitForTimeout(1000);
@@ -378,7 +304,7 @@ test('TestSettingsNotificationType', async ({ page }) => {
   await EnsureInSettingsApp(page);
   //console.log("timeout been waited for");
   const notificationsItem = await page.getByRole('listitem').filter({ hasText: regexStartsWithNotifications });
-  await expect(notificationsItem).toBeVisible();
+  await expect(notificationsItem).toBeVisible({ timeout: 10_000 });
 
   const targetListItem = await notificationsItem.getByRole('listitem').filter({ hasText: /^Access Management/});
   await targetListItem.click();
@@ -407,14 +333,7 @@ test('TestSettingsNotificationType', async ({ page }) => {
   await executeSaveActions(page); 
 
   console.log('End of the select notification test  ') ;
-});
-
- async function OpenPage(browser : Browser) : Promise<Page> {
-  const userContext = await browser.newContext({ storageState: 'playwright/.auth/user.json' });
-  const userPage = await userContext.newPage();
-  await userPage.goto(getLoginUrl());
-  return userPage;
- }
+}
 
 async function TestComboSelections(modPage : Page, comboName : string) {
   await EnsureInSettingsApp(modPage);
@@ -496,19 +415,6 @@ async function logInToAvert(page : Page) {
   //const targetURL = USE_CB2 ? cb2_LOGIN_URL : LOGIN_URL;
   const targetURL = getLoginUrl();
   await page.goto(targetURL);
-}
-
-async function getNewCoordSys(coordCombo : Locator) : Promise<string> {
-  const curCoords = await coordCombo.textContent();
-  let retCS = (curCoords == 'Degrees, Decimal Minutes' ?  'Degrees, Minutes, Seconds' :'Degrees, Decimal Minutes');
-  return retCS;
-}
-
-async function getNewPhoneNumber() : Promise<string> {
-  return '(212) 456 - 9000';
-  const today = new Date();
-  console.log(' minute=' + today.getMinutes().toString().padStart(2, '0') + ' second=' + today.getSeconds().toString().padStart(2, '0'));
-  return '(212) 456 - '  + today.getMinutes().toString().padStart(2, '0') + today.getSeconds().toString().padStart(2, '0');
 }
 
 async function executeSaveActions(page : Page) : Promise<void> {
