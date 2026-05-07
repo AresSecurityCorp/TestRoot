@@ -1,6 +1,6 @@
 
-//export const RUN_DEV = true;
-export const RUN_DEV = false;
+export const RUN_DEV = true;
+//export const RUN_DEV = false;
 const LOGIN_URL = 'https://cb2-release2.aresseccorp.com/login';
 const DEV_LOGIN_URL = 'https://cb2-dev2.aresseccorp.com/login';
 
@@ -35,7 +35,7 @@ export function getUsername() {
     return RUN_DEV ? devUsername : adminUsername;
 }   
 
-export function getPassword() {
+export function getAdminPassword() {
     return RUN_DEV ? devPwd : adminPwd;
 }   
 export function getDBConfig() {

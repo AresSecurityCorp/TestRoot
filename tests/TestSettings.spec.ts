@@ -4,7 +4,7 @@ import { test, expect, type Page, type Locator, Browser, BrowserContext } from '
 import { getComparator } from 'playwright-core/lib/utils';
 import fs from 'fs/promises';
 
-import { RUN_DEV , getDBConfig, getLoginUrl , getPassword, getUsername } from '../utils/constants.js';
+import { RUN_DEV , getDBConfig, getLoginUrl , getAdminPassword, getUsername } from '../utils/constants.js';
 import {AdminApprover } from '../utils/approve.js';
 
 //test.use({ storageState: 'playwright/.auth.json' });

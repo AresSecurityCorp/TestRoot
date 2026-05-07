@@ -1,5 +1,5 @@
 import { test, expect, type Page, type Locator, type Browser } from '@playwright/test';
-import {RUN_DEV , getDBConfig, getLoginUrl , getPassword, getUsername } from '../utils/constants.js';
+import {RUN_DEV , getDBConfig, getLoginUrl , getAdminPassword, getUsername } from '../utils/constants.js';
 import {AdminApprover } from '../utils/approve.js';
 // @ts-ignore
 import { getComparator } from 'playwright-core/lib/utils';

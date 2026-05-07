@@ -4,7 +4,7 @@ import { test, expect, type Page, type Locator, Browser, BrowserContext } from '
 import { getComparator } from 'playwright-core/lib/utils';
 import fs from 'fs/promises';
 
-import { RUN_DEV , getDBConfig, getLoginUrl , getPassword, getUsername } from '../utils/constants.js';
+import { RUN_DEV , getDBConfig, getLoginUrl , getAdminPassword, getUsername } from '../utils/constants.js';
 import {AdminApprover } from '../utils/approve.js';
 
 
@@ -306,7 +306,11 @@ async function TestNotificationType(page : Page) {
   const notificationsItem = await page.getByRole('listitem').filter({ hasText: regexStartsWithNotifications });
   await expect(notificationsItem).toBeVisible({ timeout: 10_000 });
 
-  const targetListItem = await notificationsItem.getByRole('listitem').filter({ hasText: /^Access Management/});
+  //const targetListItem = await notificationsItem.getByRole('listitem').filter({ hasText: /^Access Management/});
+  const notificationsListItems = await notificationsItem.getByRole('listitem').all();
+  await expect((await notificationsItem.getByRole('listitem').all()).length).toBeGreaterThan(0);
+  const targetListItem = notificationsListItems[0];
+  
   await targetListItem.click();
   const allowNotifications = await targetListItem.getByRole('checkbox');
   const isChecked = await allowNotifications.isChecked();
